@@ -1,0 +1,38 @@
+---
+title: "E. coli - where is it most dangerous to swim in rivers?"
+author: "James"
+output:
+  html_document:
+    code_download: true
+---
+
+```{r code, message=FALSE, warning=FALSE, echo=FALSE, out.width='100%'}
+library(tidyverse)
+lawa <- read_csv("http://www.massey.ac.nz/~jcmarsha/161122/LAWA/lawa43.csv")
+
+lawa = lawa %>% mutate(safeToSwim = ECOLI < 550) %>% 
+  count(SWQLanduse, safeToSwim) %>%
+  replace_na(list(safeToSwim = "unknown"))
+
+ggplot(lawa, aes(x = SWQLanduse, 
+                 y = n, 
+                 fill = safeToSwim)) +
+  geom_col(position = position_fill(reverse = TRUE)) +
+  scale_fill_manual(labels = c(">550 MPN/100mL", "<550 MPN/100mL", "No Data"),
+                    values = c("#d20000", "#00e300", "#898989")) +
+  labs(title = "E. Coli - where is it most dangerous to swim in rivers?",
+       subtitle = "LAWA recommends against swiming in rivers with E. Coli detected above 550 MPN per 100mL",
+       y = "Percentage of rivers",
+       x = "Land types") +
+  scale_y_continuous(labels = scales::percent) +
+  theme_minimal() +
+  theme(legend.title = element_blank(),
+        legend.position = "bottom")
+```
+
+This chart compares the percentage of rivers that exceed detected E. Coli levels of 550 MPN/100mL as this is the LAWA threshold for swimming safely. The story told is that urbanisation negatively impacts the proportion of swimmable rivers as it is linked to an increased proportion of above-threshold levels of E. Coli meaning, according to the LAWA, increased proportion of above-threshold faecal contamination and presence of disease-causing organisms. I chose this story because it is more practical for a flyer reader than comparing absolute E. Coli levels between land types as they may not be aware of what levels are considered dangerous. Thus, I used a 100% stacked bar chart to compare the relative differences rather than absolute values. To avoid misleading, particularly for the urban land type, the chart includes sites without enough data (N/A in the text file) as these would otherwise disproportionately affect the percentages of >550 and <550 between land types. My overall conclusion is that, regarding E. Coli, forests have the smallest proportion of rivers to avoid swimming in, followed by Rural areas, and Urban areas have the highest proportion of rivers to avoid swimming in.
+
+```{r, ref.label="code", eval=FALSE}
+```
+
+

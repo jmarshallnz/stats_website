@@ -1,0 +1,81 @@
+---
+title: "Clear as mud. Turbidity throughout the seasons"
+author: "Olivia"
+output:
+  html_document:
+    code_download: true
+---
+
+```{r code, message=FALSE, warning=FALSE, echo=FALSE, out.width='100%'}
+library(tidyverse)
+library(patchwork)
+
+lawa <- read_csv("http://www.massey.ac.nz/~jcmarsha/161122/LAWA/lawa57.csv")
+
+mangatainoka = lawa %>%
+  filter(SiteID == 'mangatainoka at putara') %>% 
+  select(-NH4, -BDISC, -DRP, -ECOLI, -TN, -TP, -PH, -TON)
+
+mangatainoka$Month <- format(as.Date(mangatainoka$Date), '%m')
+
+mangatainoka$Month <- factor(mangatainoka$Month,
+         labels = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct","Nov", "Dec"))
+
+mangatainoka = mangatainoka%>%
+  mutate(
+    Season = fct_collapse(
+      .f = Month,
+      Spring = c("Sep", "Oct", "Nov"),
+      Summer = c("Dec", "Jan", "Feb"),
+      Autumn = c("Mar", "Apr", "May"),
+      Winter = c("Jun", "Jul", "Aug" )))
+
+g1 = ggplot(mangatainoka)+
+  geom_col(mapping = aes(x=Month, y=TURB, fill=Season))+
+  scale_fill_manual(values=c(Summer = 'gold', Autumn = 'orangered3', Winter = 'steelblue3', Spring = 'olivedrab4'))+
+  labs(title = 'Mangatainoka at Putara', subtitle = 'Land use = Forest, Altitude = Upland', y='Turbidity')+
+  theme(plot.title = element_text(size = 10), plot.subtitle = element_text(size=6.5))+
+   theme_minimal(base_size = 11)+
+  ylim(0,300)
+
+whareama_river = lawa %>%
+  filter(SiteID == 'Whareama River at Gauge') %>% 
+  select(-NH4, -BDISC, -DRP, -ECOLI, -TN, -TP, -PH, -TON) 
+
+whareama_river$Month <- format(as.Date(whareama_river$Date), "%m")
+
+  whareama_river$Month <- factor(whareama_river$Month,
+         labels = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct","Nov", "Dec"))
+
+whareama_river = whareama_river%>%
+  mutate(
+    Season = fct_collapse(
+      .f = Month,
+      Spring = c("Sep", "Oct", "Nov"),
+      Summer = c("Dec", "Jan", "Feb"),
+      Autumn = c("Mar", "Apr", "May"),
+      Winter = c("Jun", "Jul", "Aug" )))
+
+g2 = ggplot(whareama_river)+
+  geom_col(mapping = aes(x=Month, y=TURB, fill=Season))+
+  scale_fill_manual(values=c(Summer = 'gold', Autumn = 'orangered3', Winter = 'steelblue3', Spring = 'olivedrab4'))+
+  labs(title = 'Whareama River at Gauge', subtitle = 'Landuse = Rural, Altitude = Lowland', y='Turbidity')+
+  theme(plot.title = element_text(size = 10), plot.subtitle = element_text(size=6.5))+
+   theme_minimal(base_size = 11)
+
+g1 / g2 + plot_layout(guides = 'collect')+
+  plot_annotation(title = 'Clear as mud. Turbidity throughout the seasons', theme = theme(plot.title = element_text(size = 17)))
+```
+
+I chose to compare the turbidity of two different sites and show how these levels change over the seasons.Turbidity measures the visual water clarity and is an index of cloudiness of water by measuring how light is scattered by fine particles. A low turbidity measure is good, a high measure is bad. Turbidity is also greatly affected by the flow of the water.
+
+I chose to display my data in a column graph as I felt this was the best way to compare and contrast the levels of turbidity within the sites and also across the sites. The sites I compared are Mangatainoka at Putara which is located in forest, upland and the Whareama River at Gauge which is located in a rural area in lowland. 
+The levels of turbidity at Mangatainoka where greatly lower than that of Whareama River. So much lower, that if I made the Y-axis scale the same on each graph, the turbidity levels for Mangatainoka wouldn't even show. Instead I scaled the axis values down 10 fold so the reader can still see how they compare proportionally. Overall it is clear that the Mangatainoka at Putara site has much greater visual clarity due to the overall very low trend in turbidity. This perhaps also suggests that the flow of water at this site is much less than that of Whareama River at Gauge which has a very high turbidity score and thus low visual clarity. We would expect therefore that the Whareama River at Gauge would be a site with a fast current.
+
+Although the levels of turbidity at the two sites are very different, it appears that the changes in seasons do affect the visual clarity of these two waterways. In winter the measures of turbidity are much higher - most likely due to more rain fall and therefore more sediment being washed into the waterway, and in summer they are significantly lower, very likely due to the fact that there is not as much rain, and perhaps less water, decreasing the flow/current and decreasing turbidity.
+
+```{r, ref.label="code", eval=FALSE}
+```
+
+
+

@@ -1,0 +1,29 @@
+---
+title: "The Waihou River gets worse"
+author: "Manisha"
+output:
+  html_document:
+    code_download: true
+---
+
+```{r code, message=FALSE, warning=FALSE, echo=FALSE, out.width='100%'}
+library(tidyverse)
+library(patchwork)
+
+lawa <- read_csv("http://www.massey.ac.nz/~jcmarsha/161122/LAWA/lawa09.csv")
+
+lawa_waihou_river <- lawa %>% arrange(SiteID) %>% filter(SiteID == "waihou river at whites rd" | SiteID == "waihou river at okauia" | SiteID == "Waihou at Te Aroha (NRWQN) (HM5)") %>% select(SiteID, ECOLI, TN, PH, BDISC, Date)
+
+p1 <- ggplot(lawa_waihou_river) + geom_smooth(mapping=aes(x=Date, y=PH, col=SiteID), size=1) + scale_colour_manual(values=c("#b8002e", "#11b81f", "#11b8b2")) + labs(x=NULL) + theme(axis.text.x = element_blank())  + theme_bw() + theme_minimal()
+
+p2 <-  ggplot(lawa_waihou_river) + geom_smooth(mapping=aes(x=Date, y=TN, col=SiteID), size=1) + scale_colour_manual(values=c("#b8002e", "#11b81f", "#11b8b2")) + labs(x=NULL) + theme(axis.text.x = element_blank())  + theme_bw() + theme_minimal()
+
+p3 <- ggplot(lawa_waihou_river) + geom_line(mapping=aes(x=Date, y=BDISC, col=SiteID), size=1) + scale_colour_manual(values=c("#b8002e", "#11b81f", "#11b8b2"))  + theme_bw() + theme_minimal()
+
+(p1 / p2 / p3) + plot_layout(ncol=1, guides = 'collect') + plot_annotation(title = "The Waihou River gets worse", subtitle = "Data thanks to LAWA")
+```
+
+I chose this story because I grew up in Te Aroha, where the Waihou river runs through the town. I was interested to see how the Waihou river quality changes at these 3 different sites. Because the data is very jumpy, I chose smooth graphs for pH and total Nitrogen, but I thought a line graph would be good to show how black disc measure of clarity has been declining for Whites rd site. I'm not at all surprised that this little comparison of the pH, total Nitrogen, and black disc measure of river quality, shows that the Te Aroha site is one of the two worst Waihou river sites. As the graphs show, the quality of okauia and Te Aroha have similar results. Interestingly, the sites order starts with Te Aroha, Okauia, and Whites rd being furtherest away from Te Aroha, near Putaruru. Okauia site is almost halfway between the Te Aroha and Whites rd sites, with it being closer to Whites rd, yet Te Aroha and Okauia sites show similar results of river quality, but Whites rds even though Okauia is closer to Whites Rd than Te Aroha.  Whites rd site is clearly shown to have the best quality of Waihou river, with its pH fluctuating around 7.0, with much lower total Nitrogen and better clarity of measure black disc than the other two sites. However, the clarity of Whites rd has gradually been declining, and total Nitrogen is increasing. 
+
+```{r, ref.label="code", eval=FALSE}
+```

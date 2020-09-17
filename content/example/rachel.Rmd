@@ -1,0 +1,46 @@
+---
+title: "Heathcote River - same same, but different"
+author: "Rachel"
+output:
+  html_document:
+    code_download: true
+---
+
+```{r code, message=FALSE, warning=FALSE, echo=FALSE, out.width='100%'}
+library(tidyverse)
+
+lawa <- read_csv("http://www.massey.ac.nz/~jcmarsha/161122/LAWA/lawa67.csv")
+
+two_sites <- lawa %>%
+  filter(!is.na(ECOLI), SiteID %in% c("heathcote river at templetons road", "heathcote river at rose street"))
+
+#two_sites %>% group_by(SiteID) %>%
+#  summarise(Median = median(ECOLI), MAX = max(ECOLI))
+
+ggplot(data=two_sites) +
+  geom_line(mapping=aes(x=Date, y=ECOLI, col=SiteID), alpha=0.5) +
+  scale_colour_manual(values = c("heathcote river at templetons road" = "deepskyblue", "heathcote river at rose street" = "burlywood4")) +
+  geom_smooth(mapping=aes(x=Date, y=ECOLI), method = 'loess') +
+  geom_hline(yintercept = 550, col = 'red') +
+  scale_y_log10(labels=scales::label_comma()) +
+  facet_wrap(vars(SiteID)) +
+  theme(legend.position = "none") +
+  labs(title="Heathcote River - same same, but different.",
+       subtitle="E.Coli level between two points of Heathcote River",
+       y="E.Coli count (MPN/100mL)", 
+       caption="E.Coli level above 550 MPN/100ml shown by red line indicates unsafe for recreational water activities")
+
+  
+```
+
+For this analysis we looked at E.Coli levels between two similarly profiled point in the Heathcote River, both points are located near recreational parks, with walkways that are well used by the community.
+
+There is a significant difference between E.Coli levels between the two sites (despite being the same river) over the past decade. The median E.Coli level for the Templetons Road site is 131.5 MPN/100ml compared to Rose Street at 535.0 MPN/100ml. To show the trend, the E.Coli count was charted on a log scale on the y axis. 
+
+The MFE guideline suggests that E.Coli level E.Coli levels above 550 MPN/100ml is a red alert and considered unsafe for recreational water activity. The chart indicates that the Heathcote River the Rose Street site is more likely to be unsafe in terms of E.Coli levels compared to the Templetons Road site. 
+
+On a more practical note, if you have a water loving dog and are walking along the Heathcote River, it would be vital to leash them up near the Rose Street site.
+
+```{r, ref.label="code", eval=FALSE}
+```
+

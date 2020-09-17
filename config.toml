@@ -1,0 +1,40 @@
+baseurl = "https://www.massey.ac.nz/~jcmarsha/161122/showcase/"
+languageCode = "en-us"
+title = "161.122 Statistics"
+theme = "hugo-lithium"
+googleAnalytics = ""
+disqusShortname = ""
+ignoreFiles = ["\\.Rmd$", "\\.Rmarkdown$", "_files$", "_cache$"]
+
+[permalinks]
+    post = "/:year/:month/:day/:slug/"
+
+[[menu.main]]
+    name = "Home"
+    url = "/"
+    weight = 1
+
+[[menu.main]]
+    name = "Examples"
+    url = "/example/"
+    weight = 2
+
+[[menu.main]]
+    name = "About"
+    url = "/about/"
+
+[params]
+    description = "A website showing student work for 161.122 Statistics"
+
+    # options for highlight.js (version, additional languages, and theme)
+    highlightjsVersion = "9.12.0"
+    highlightjsCDN = "//cdnjs.cloudflare.com/ajax/libs"
+    highlightjsLang = ["r", "yaml"]
+    highlightjsTheme = "github"
+
+    MathJaxCDN = "//cdnjs.cloudflare.com/ajax/libs"
+    MathJaxVersion = "2.7.5"
+
+    # path to the favicon, under "static"
+    favicon = "favicon.ico"
+

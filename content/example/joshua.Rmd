@@ -1,0 +1,117 @@
+---
+title: "Comparison of E.coli Count in Southland Waterways"
+author: "Joshua"
+output:
+  html_document:
+    code_download: true
+---
+
+```{r code, message=FALSE, warning=FALSE, echo=FALSE, out.width='100%', fig.height=10, fig.width=7}
+library(tidyverse)
+library(lubridate)
+library(patchwork)
+
+lawa <- read_csv("http://www.massey.ac.nz/~jcmarsha/161122/LAWA/lawa86.csv")
+
+colorsA = c('#942F00', '#343BC7')
+colorsB = c('#4A991F', '#8A155F')
+
+td = lawa %>% 
+  filter(!is.na(ECOLI)) %>% 
+  group_by(SiteID) %>% 
+  mutate(ECOLI_IQR=IQR(ECOLI)) %>% 
+  arrange(ECOLI_IQR, Date) %>%
+  filter(min(ECOLI) > 10) %>%
+  ungroup() %>%
+  filter(ECOLI_IQR==min(ECOLI_IQR) | ECOLI_IQR==max(ECOLI_IQR))
+
+a = td %>% 
+  ggplot() +
+    aes(x=Date, y=ECOLI, col=SiteID) +
+    geom_line() +
+    scale_y_log10(labels=scales::comma) +
+    scale_x_date(date_breaks='1 year', date_labels='%Y', minor_breaks=NULL) +
+    labs(title='Comparison of E.coli Count in Southland Waterways',
+         subtitle='Selected Waterways had the Highest and Lowest IQR\'s for E.coli count',
+         y='E.coli count (log10)') +
+    scale_color_manual(name='Site',
+                       values=colorsA,
+                       labels=c('Mataura (Rural)', 'Otepuni Creek (Urban)')) +
+    theme(
+      legend.position = c(1, 1),
+      legend.direction = 'horizontal',
+      legend.justification = c(1, 1),
+      legend.margin = margin(1, 2, 1, 2)
+    )
+
+b = td %>% 
+  ggplot() +
+    aes(x=Date, y=PH, col=SiteID) +
+    geom_hline(yintercept=7, linetype='dashed') +
+    geom_line() +
+    labs(y='pH') +
+    scale_x_date(date_breaks='1 year', date_labels='%Y', minor_breaks=NULL) +
+    scale_color_manual(name='Site',
+                       values=colorsA,
+                       labels=c('Mataura (Rural)', 'Otepuni Creek (Urban)')) +
+    theme(
+      legend.position = c(1, 1),
+      legend.direction = 'horizontal',
+      legend.justification = c(1, 1),
+      legend.margin = margin(1, 2, 1, 2)
+    )
+
+c = td %>% 
+  ggplot() +
+    aes(x=ECOLI, y=PH, col=SiteID) +
+    geom_hline(yintercept=7, linetype='dashed') +
+    geom_jitter(alpha=.2, height=.05, size=.5, show.legend=FALSE) +
+    geom_smooth(span=.7, orientation='y', fill=NA) +
+    scale_x_log10(labels=scales::comma) +
+    ylim(6, 8) +
+    labs(x='E.coli count (log10)', y='pH',
+         subtitle='E.coli is more present in neutral pH\'s') +
+    scale_color_manual(name='Site',
+                       values=colorsA,
+                       labels=c('Mataura (Rural)', 'Otepuni Creek (Urban)')) +
+    theme(
+      legend.position = c(0, 0),
+      legend.direction = 'vertical',
+      legend.justification = c(0, 0),
+      legend.margin = margin(1, 2, 1, 2)
+    )
+
+d = lawa %>% 
+  filter(SWQLanduse!='Forest') %>% 
+  ggplot() +
+    aes(x=ECOLI, y=PH, col=SWQLanduse) +
+    geom_hline(yintercept=7, linetype='dashed') +
+    geom_density2d(alpha=.8) +
+    scale_x_log10(limits=c(10, 100000), labels=scales::comma) +
+    scale_color_manual(name='Landuse', values=colorsB)+
+    ylim(6, 8) +
+    labs(x='E.coli count (log10)',
+         y=NULL,
+         subtitle='Distribution across all sampled waterways') +
+    theme(
+      legend.position = c(0, 0),
+      legend.direction = 'horizontal',
+      legend.justification = c(0, 0),
+      legend.margin = margin(1, 2, 1, 2),
+      axis.text.y = element_blank(),
+      axis.ticks.y = element_blank()
+    )
+
+(a / b / (c | d)) &
+  theme(
+    axis.line.x.bottom = element_line(color='black'),
+    axis.line.y.left = element_line(color='black'),
+    legend.background = element_blank(),
+    plot.background = element_rect(fill=grey(0.9), color=NA)
+  )
+```
+
+With the data I selected I tried to show that E.coli is more prolific in water with a neutral pH. The first graph I selected demonstrates the E.coli count over time, which is how I selected the sample waterways. The second graph reveals an anomaly in the pH measurements between the sample waterways. The third graph demonstrates the relationship between pH and E.coli count. The final graph is to demonstrate the clustering of the data across all waterways in the dataset. Based on this data, it appears there is a connection between pH and E.coli count, though there may be another variable that affects both variables.
+
+```{r, ref.label="code", eval=FALSE}
+```

@@ -1,0 +1,56 @@
+---
+title: "Total Oxidised Nitrogen"
+author: "Anonymous"
+output:
+  html_document:
+    code_download: true
+---
+
+```{r code, message=FALSE, warning=FALSE, echo=FALSE, out.width='100%'}
+library(tidyverse)
+library(lubridate)
+library(patchwork)
+
+lawa <- read_csv("http://www.massey.ac.nz/~jcmarsha/161122/LAWA/lawa05.csv")
+p1 <- lawa %>%
+  mutate(date = ymd(Date)) %>% 
+  filter(date >= as.Date('2014-1-21')) %>% 
+  mutate(Month = month(x= date, label = TRUE)) %>% 
+drop_na() %>% 
+  select(SWQLanduse,Month,TON) %>% 
+  group_by(Month, SWQLanduse) %>% 
+  summarise(Mean_TON = mean(TON)) %>%  
+  ggplot()+
+  geom_col(aes(x = Month,y = Mean_TON,fill =SWQLanduse ),position = 'dodge')+
+  labs(title = 'TON - Average Monthly Rates', 
+  subtitle = 'Measured over a 5 Year Period',
+  y = 'Mean TON (mg/L)')
+
+p2 <- lawa %>%
+  mutate(date = ymd(Date)) %>% 
+  filter(date >= as.Date('2016-1-21')) %>% 
+ drop_na() %>% 
+  select(SWQAltitude,Date,TON) %>% 
+  ggplot()+
+  geom_smooth(aes(x=Date,y = TON, col = SWQAltitude),span = 1.5)+
+  labs(title = 'TON - As Measured by Altitude',subtitle = '3 year Period', y = 'TON (mg/L)' )
+
+p3 <- lawa %>%
+  mutate(date = ymd(Date)) %>% 
+  filter(date >= as.Date('2016-1-21')) %>% 
+  drop_na() %>% 
+  select(TURB,Date,SWQAltitude) %>% 
+  ggplot()+
+  geom_smooth(aes(x=Date,y = TURB, col = SWQAltitude),span = 1.5)+
+  labs(title = 'Turbidity - As Measured by Altitude',subtitle = '3 year Period',y = 'Turbidity' )
+
+p1/p2/p3
+```
+
+Choose to concentrate on Total Oxidised Nitrogen because this is a key factor driving plant and algal growth.It consists of the water soluble forms of Nitrogen (Nitrides and Nitrates). The monthly chart indicates the average TON (mg/l) per month over a 5 year period, seperating out results by land usage. This indicates 2 things. First is that the levels of TON peak in all areas from June to September which would probably coincide with the rainfall increasing over winter, drawing out Nitrogen from the land. The second is that it provides a visual comparison between the landuse, With Rural being the greatest source followed closely by Urban then Forestry.
+
+The lower two graphs represent the difference between the high and low lying land. Again the seasonal changes show up. The difference between the two types seems to indicate that most of the productive rural and urban land is situated on lowlands rather than that the Nitrogen has been brought down by water flow.The Turbidity graph was included to reinforce the idea that the quantity of Nitrogen in the rivers is directly related to the rainfall. 
+
+```{r, ref.label="code", eval=FALSE}
+```
+

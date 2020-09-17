@@ -1,0 +1,29 @@
+{{ partial "header.html" . }}
+
+<main class="content" role="main">
+
+  {{ if .Content }}
+  <article class="article">
+    {{ if .Title }}
+    <h1 class="article-title">{{ .Title }}</h1>
+    {{ end }}
+    <div class="article-content">
+      {{ .Content }}
+    </div>
+  </article>
+  {{ end }}
+  <div class="archive">
+    {{ $pages := .Pages }}
+    {{ if .IsHome }}
+    {{ $pages = .Site.RegularPages }}
+    {{ end }}
+    {{ range (where $pages "Section" "!=" "") }}
+    <article class="archive-item">
+      <a href="{{ .RelPermalink }}" class="archive-item-link">{{ .Title }}{{ with .Params.author }} by {{ . }}{{ end }}</a>
+    </article>
+    {{ end }}
+  </div>
+
+</main>
+
+{{ partial "footer.html" . }}

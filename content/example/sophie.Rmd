@@ -1,0 +1,168 @@
+---
+title: "A Deeper Look into Motueka River"
+author: Sophie
+output:
+  html_document:
+    code_download: true
+---
+
+```{r code, message=FALSE, warning=FALSE, echo=FALSE, out.width='100%', fig.dim=c(15,10)}
+library(tidyverse)
+library(lubridate)
+library(rnaturalearth)
+library(rnaturalearthdata)
+library(rgeos)
+library(sf)
+library(patchwork)
+options(stringsAsFactors = F)         # no automatic data transformation
+options("scipen" = 100, "digits" = 4) # suppress math annotation
+
+lawa <- read_csv("http://www.massey.ac.nz/~jcmarsha/161122/LAWA/lawa00.csv")
+
+##After Looking at my sample, I discovered that 4 of the sites given were along the Motueka River
+Motueka_Raw <- lawa %>%
+  filter(grepl(pattern = "Motueka", x = SiteID, ignore.case = TRUE))
+##Two of them have lots of reading while the others only began being read more recently, could still be interesting to compare.
+RuralVsForest = Motueka_Raw %>%
+                  group_by(SiteID, SWQLanduse) %>%
+                  summarise(Total= n())
+##I can see most of the river testing has been done in forested parts of the river. The two forested Sites (Motueka at Woodstock (NRWQN) (NN1)) and (Motueka at Gorge (NRWQN) (NN2)) have both got 180 samples taken from them.This is due to the other sites only having readings since 2009
+Motueka <- Motueka_Raw %>%
+      filter(Date>=as.Date("2009-01-01"))%>%
+      mutate(SiteID = ifelse(SiteID =="Motueka at Gorge (NRWQN) (NN2)", "Motueka Gorge", SiteID),
+             SiteID = ifelse(SiteID =="motupiko at 250m u-s motueka rv", "Motueka at Motupiko", SiteID),
+             SiteID = ifelse(SiteID =="Motueka at Woodstock (NRWQN) (NN1)", "Motueka at Woodstock", SiteID),
+             SiteID = ifelse(SiteID =="motueka at sh60 bridge", "Motueka SH60 Bridge", SiteID))
+
+##I wonder where along the river my sites are
+Geography <- Motueka%>%
+                filter(Date==as.Date("2017-01-10"))%>%
+                select(Lat, Long, SiteID)
+Geography_as_sf <- st_as_sf(Geography, coords=c('Long', 'Lat'))
+st_crs(Geography_as_sf) <- 4326
+
+#I wonder how it appears on the map
+NZ <- ne_countries(scale = 10, type = "countries", country = "new zealand",  returnclass = "sf")
+log <- capture.output({
+  NZ_RIVERS <- ne_download(scale = 10, 
+                        type = 'rivers_lake_centerlines',
+                        category = 'physical', 
+                        returnclass = "sf")
+})
+NZ_POINTS<- st_centroid(NZ)
+NZ_POINTS <- cbind(NZ, st_coordinates(st_centroid(NZ$geometry)))
+
+# Map of location of Motueka River Monitoring Sites
+NZ_MAP<-ggplot() +
+  geom_sf(data=NZ, fill = "#87E68C", color = "#25221E") +
+  geom_sf(data=NZ_RIVERS, color='#000077') +
+  geom_sf(data=Geography_as_sf, aes(col=SiteID), show.legend = FALSE, size=1.9)+
+  scale_color_manual(values=c("Red", "#F700FF", "#B300FF", "#040FE0"))+
+  geom_sf()+
+  coord_sf(xlim = c(165.15, 180), ylim = c(-48, -34), expand = FALSE)+
+  labs(title = "Motueka River Monitoring Sites", subtitle = "As Seen on New Zealand")+
+  theme_void()
+# What does this look like up close? 
+NELSON_MAP<-ggplot() +
+  geom_sf(data=NZ, fill = "#87E68C", color = "#25221E") +
+  geom_sf(data=NZ_RIVERS, color='#000077') +
+  geom_sf(data=Geography_as_sf, aes(col=SiteID), size=3, show.legend = FALSE)+
+  geom_sf_label(data=Geography_as_sf, mapping=aes(label = SiteID, color=SiteID), nudge_x = 0.25, nudge_y = -0.07, show.legend = FALSE)+
+  scale_color_manual(values=c("Red", "#F700FF", "#B300FF", "#040FE0"))+
+  geom_sf()+
+  coord_sf(xlim = c(172.5, 175), ylim = c(-42, -40.6), expand = FALSE)+
+  annotate(data=NZ_POINTS, geom = "text", x = 174, y = -41.5, label = "Blenheim", size=4)+
+  annotate(data=NZ_POINTS, geom = "text", x = 174.7, y = -41.22, label = "Wellington", size=5)+
+  annotate(data=NZ_POINTS, geom = "text", x = 173.32, y = -41.24, label = "Nelson", size=4)+
+  labs(title = "Motueka River Monitoring Sites", 
+       subtitle = "A Closer Look at the Nelson Region",
+       x = NULL,
+       y = NULL)+
+  theme_minimal()+
+  theme(axis.text.x=element_blank(),
+        axis.ticks.x=element_blank())
+# What Happens to Total Nitrogen Levels over Time?
+MOTUEKA_TN <- Motueka%>%
+  filter(is.na(TN)==FALSE)%>%
+  ggplot()+
+    geom_line(aes(Date, TN, col=SiteID), show.legend = TRUE)+
+    scale_color_manual(values=c("Red", "#F700FF", "#B300FF", "#040FE0"))+
+    labs(title = "Seasonal Variations of Nitrogen Content at Motueka River", x=NULL
+      )+
+    ylab("Total Nitrogen (mg/L)")
+# What Happens to the PH over time?
+MOTUEKA_PH <- Motueka%>%
+  filter(is.na(PH)==FALSE)%>%
+  ggplot()+
+    geom_line(aes(Date, PH, col=SiteID), show.legend = TRUE)+
+    scale_color_manual(values=c("Red", "#F700FF", "#B300FF", "#040FE0"))+
+    labs(title = "PH Content at Motueka River over time", x=NULL
+      )+
+    ylab("PH Level")
+##How does Nitrogen affect other factors?
+TN_PH <- Motueka%>%
+  filter(is.na(TN)==FALSE,is.na(PH)==FALSE,SiteID=="Motueka at Woodstock")%>%
+  ggplot()+
+    geom_jitter(mapping=aes(x=TN, y=PH), col="#F700FF")+
+    labs(title = "Nitrogen vs pH, Woodstock", 
+         subtitle = "Nitrogen Fertilisers to Blame?"
+      )+
+    xlab("Total Nitrogen (mg/L)")
+# How clear is Motueka River
+MOTUEKA_TURB <- Motueka%>%
+  filter(is.na(TURB)==FALSE)%>%
+  ggplot()+
+    geom_line(aes(Date, TURB, col=SiteID), show.legend = FALSE)+
+    scale_color_manual(values=c("Red", "#F700FF", "#B300FF", "#040FE0"))+
+    labs(title = "Turbidity Levels Spike at Forested Sites along Motueka River"
+         )+
+    scale_y_log10()+
+    ylab("Turbidity (NTU)")+
+    xlab("")
+# In effect whats the other system
+MOTUEKA_BDISC <- Motueka%>%
+  filter(is.na(BDISC)==FALSE)%>%
+  ggplot()+
+    geom_line(aes(Date, BDISC, col=SiteID), show.legend = FALSE)+
+    scale_color_manual(values=c("Red", "#F700FF", "#B300FF", "#040FE0"))+
+    labs(title = "BDISC Readings along Motueka River",
+         x = NULL)+
+    scale_y_log10()+
+    ylab("Black Disc Visibility Distance (m)")
+# How do these relate?
+TURB_BDISC <- Motueka%>%
+  filter(is.na(TURB)==FALSE,is.na(BDISC)==FALSE)%>%
+  ggplot()+
+    geom_jitter(mapping=aes(x=TURB, y=BDISC, col = SiteID), show.legend = FALSE)+
+    scale_color_manual(values=c("Red", "#F700FF", "#B300FF", "#040FE0"))+
+    labs(title = "River Clarity Systems", 
+         subtitle = "Less transparent, greater turbidity", 
+         x = "Turbidity (NTU)",
+         y = "Black Disc Visibility Distance (m)")+
+         scale_x_log10()+scale_y_log10()
+layout <- "
+DAAAAE
+DAAAAE
+BBBCCC
+FFFGGG
+"
+NELSON_MAP + MOTUEKA_PH + MOTUEKA_TURB + TN_PH + TURB_BDISC + MOTUEKA_TN + MOTUEKA_BDISC +
+  plot_layout(design = layout,guides = 'collect')+
+  plot_annotation(
+  title = 'A Deeper Look into Motueka River',
+  subtitle = 'Nitrogen, pH, Turbidity, BDISC, and Location',
+  theme = theme(plot.title = element_text(size =24),
+                plot.subtitle = element_text(size = 17)
+                )
+  )
+```
+
+Initially, I investigated the sites I was given to help put them in context. I noticed quickly that 4 sites contained a key word "Motueka" which ended up being the name of a river at the top of the South Island. I chose to plot these on a map to gain a better idea of the context of the sites. Throughout the graphs I chose to set the sites to always have one colour each. This makes it easy to look at what line or dot relates to which part of the river. 
+On the top left, the scatter (jitter) plot compares Nitrogen levels to river pH. There was no relationship in the data overall, but looking only at Woodstock Site there is an apparent weak inverse relationship. Doing a brief investigation I found that Nitrogen Fertilisers can raise acidity (lower on the pH scale) due to Ammonium-N releasing H+ ions (https://www.blinc.com/role-nitrogen-fertilizer-soil-ph). This could be interesting for looking into ways to reduce river acidity. A pH greater than 7 is not acidic and this river is still healthy, but it is comparatively lower than at other sites and may be worth investigating further.
+On the left middle I graphed pH over time. This is interesting for comparing the sites. I used line charts for all the time series charts. As the lines connect the readings, it shows that at Motupiko there was one reading taken in 2013 and then no others for a few years. I can see that generally pH will increase in the Summer of each year, but not distinctly enough to register as seasonal variation.
+On the bottom left I then look at Total Nitrogen levels and this does appear to have seasonal variation (peaks in the summer). I wonder then if that means the slight-but-not-quite seasonality in pH over time could be caused by the Nitrogen levels changing.
+On the right hand side graphs, I look into water clarity.The two systems of measuring water clarity that I look into are Turbidity - a measurement of how light is scattered by fine particles in waterways, and BDISC - how far away can a black disc be seen in water. I chose to map both on a logarithmic scale because it shows more clearly how my sample lies at the extreme. it suggests that when water visibility is lower, the Turbidity gives clearer readings than the BDISC readings. Although there is an inverse relationship appears this is due to BDIsc being a measure where low numbers are bad, and Turbidity having high numbers bad. (a low visibility distance will usually have high turbidity). Again, the two time series charts are similar but different enough that sometimes different spikes are picked up by each, could be interesting to investigate further.
+Overall, although my story may not be the most moving, I believe it gives a closer look into a special part of New Zealand.
+
+```{r, ref.label="code", eval=FALSE}
+```

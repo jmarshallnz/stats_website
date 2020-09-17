@@ -1,0 +1,22 @@
+{{ partial "header.html" . }}
+
+<main class="content" role="main">
+
+  <article class="article">
+
+    <h1 class="article-title">{{ .Title }}</h1>
+
+    {{ if eq .Section "example" }}
+    <span class="article-date">{{ .Params.author }}</span>
+    {{ end }}
+
+    <div class="article-content">
+      {{ .Content }}
+    </div>
+  </article>
+
+  {{ partial "disqus.html" .}}
+
+</main>
+
+{{ partial "footer.html" . }}
